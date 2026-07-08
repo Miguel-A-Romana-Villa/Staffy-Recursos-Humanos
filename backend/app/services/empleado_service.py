@@ -1,0 +1,2 @@
+class EmpleadoService:
+    pass

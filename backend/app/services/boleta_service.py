@@ -1,0 +1,2 @@
+class BoletaService:
+    pass

@@ -1,0 +1,2 @@
+class AsistenciaService:
+    pass
