@@ -1,6 +1,46 @@
 {
-  "empleados": [],
-  "asistencias": [],
+  "empleados": [
+    {
+      "id": 1,
+      "codigo": "EMP001",
+      "dni": "45879632",
+      "nombres": "Juan Carlos",
+      "apellidos": "Ramirez Torres",
+      "cargo": "Asistente Administrativo",
+      "sueldo_base": 1800,
+      "activo": true
+    },
+    {
+      "id": 2,
+      "codigo": "EMP002",
+      "dni": "42157896",
+      "nombres": "Maria Fernanda",
+      "apellidos": "Lopez Vargas",
+      "cargo": "Analista Contable",
+      "sueldo_base": 2400,
+      "activo": true
+    }
+  ],
+  "asistencias": [
+    {
+      "id": 1,
+      "empleado_codigo": "EMP001",
+      "fecha": "2026-06-24",
+      "estado": "ASISTIO"
+    },
+    {
+      "id": 2,
+      "empleado_codigo": "EMP002",
+      "fecha": "2026-06-24",
+      "estado": "TARDE"
+    },
+    {
+      "id": 3,
+      "empleado_codigo": "EMP001",
+      "fecha": "2026-06-25",
+      "estado": "FALTO"
+    }
+  ],
   "boletas": [],
   "reportes": []
 }
