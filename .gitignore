@@ -3,11 +3,14 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+.env.local
+*.sqlite3
 
 # Node
 node_modules/
 dist/
 .vite/
+*.tsbuildinfo
 
 # IDE
 .vscode/

@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.database import SessionLocal, init_db
 from app.routes import asistencia, auth, boletas, empleados, health, reportes
+from app.services.auth_service import AuthService
 
 app = FastAPI(title=settings.app_name)
 
@@ -20,3 +22,13 @@ app.include_router(empleados.router, prefix="/api/empleados", tags=["empleados"]
 app.include_router(asistencia.router, prefix="/api/asistencia", tags=["asistencia"])
 app.include_router(boletas.router, prefix="/api/boletas", tags=["boletas"])
 app.include_router(reportes.router, prefix="/api/reportes", tags=["reportes"])
+
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
+    db = SessionLocal()
+    try:
+        AuthService(db).asegurar_admin_inicial()
+    finally:
+        db.close()

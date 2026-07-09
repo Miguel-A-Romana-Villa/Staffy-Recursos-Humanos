@@ -6,6 +6,13 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UsuarioCreate(BaseModel):
+    nombres: str
+    email: str
+    password: str
+    rol: str = "RRHH"
+
+
 class UsuarioSesion(BaseModel):
     id: int
     nombres: str

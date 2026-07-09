@@ -1,18 +1,28 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
+from app.database import get_db
 from app.schemas.auth_schema import LoginRequest, LoginResponse, UsuarioSesion
+from app.services.auth_service import AuthService
 
 router = APIRouter()
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest):
+def login(payload: LoginRequest, db: Session = Depends(get_db)):
+    usuario = AuthService(db).login(payload)
+    if usuario is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales invalidas",
+        )
+
     return LoginResponse(
-        access_token="token-pendiente-de-implementar",
+        access_token=f"token-demo-{usuario.id}",
         usuario=UsuarioSesion(
-            id=1,
-            nombres="Administrador",
-            email=payload.email,
-            rol="RRHH",
+            id=usuario.id,
+            nombres=usuario.nombres,
+            email=usuario.email,
+            rol=usuario.rol,
         ),
     )

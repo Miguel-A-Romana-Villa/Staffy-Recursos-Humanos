@@ -2,9 +2,24 @@ export type Empleado = {
   id: number;
   codigo: string;
   dni: string;
+  correo?: string;
+  telefono?: string;
   nombres: string;
   apellidos: string;
   cargo: string;
-  sueldoBase: number;
+  sueldo_base: number;
+  hijos: number;
+  fecha_nacimiento?: string;
+  fecha_inicio?: string;
+  fecha_cese?: string;
+  regimen_pensionario: RegimenPensionario;
+  foto_url?: string;
   activo: boolean;
+};
+
+export type RegimenPensionario = 'ONP' | 'AFP' | 'SIN_REGIMEN';
+
+export type EmpleadoForm = Omit<Empleado, 'id' | 'codigo' | 'activo'> & {
+  codigo?: string;
+  activo?: boolean;
 };
