@@ -5,3 +5,4 @@ pydantic-settings
 SQLAlchemy
 psycopg[binary]
 python-dotenv
+pytest
