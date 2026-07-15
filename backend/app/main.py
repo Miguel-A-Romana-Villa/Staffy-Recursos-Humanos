@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import SessionLocal, init_db
-from app.routes import asistencia, auth, boletas, empleados, health, reportes
+from app.routes import asistencia, auth, boletas, conceptos, empleados, health, reportes, sueldos
 from app.services.auth_service import AuthService
 
 app = FastAPI(title=settings.app_name)
@@ -20,6 +20,8 @@ app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(empleados.router, prefix="/api/empleados", tags=["empleados"])
 app.include_router(asistencia.router, prefix="/api/asistencia", tags=["asistencia"])
+app.include_router(conceptos.router, prefix="/api/conceptos", tags=["conceptos"])
+app.include_router(sueldos.router, prefix="/api/sueldos", tags=["sueldos"])
 app.include_router(boletas.router, prefix="/api/boletas", tags=["boletas"])
 app.include_router(reportes.router, prefix="/api/reportes", tags=["reportes"])
 

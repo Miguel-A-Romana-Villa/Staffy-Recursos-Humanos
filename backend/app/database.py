@@ -35,6 +35,9 @@ def ensure_schema_updates():
         empleado_columns = {column["name"] for column in inspector.get_columns("empleados")}
         add_column_if_missing("empleados", empleado_columns, "correo", "VARCHAR(120)")
         add_column_if_missing("empleados", empleado_columns, "telefono", "VARCHAR(20)")
+        add_column_if_missing("empleados", empleado_columns, "tipo", "VARCHAR(30) DEFAULT 'tiempo_completo'")
+        add_column_if_missing("empleados", empleado_columns, "horas_trabajadas", "FLOAT")
+        add_column_if_missing("empleados", empleado_columns, "tarifa_por_hora", "FLOAT")
         add_column_if_missing("empleados", empleado_columns, "hijos", "INTEGER DEFAULT 0")
         add_column_if_missing("empleados", empleado_columns, "fecha_nacimiento", "DATE")
         add_column_if_missing("empleados", empleado_columns, "fecha_inicio", "DATE")

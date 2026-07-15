@@ -1,62 +1,47 @@
-from typing import Optional
+from sqlalchemy.orm import Session
 
-from app.services.json_store import JsonStore
+from app.db.models import AsistenciaDB, BoletaDB, EmpleadoDB
 
 
 class ReporteService:
-    def __init__(self, store: Optional[JsonStore] = None):
-        self.store = store or JsonStore()
+    def __init__(self, db: Session):
+        self.db = db
 
     def resumen(self) -> dict:
-        data = self.store.read()
-        empleados_activos = [empleado for empleado in data["empleados"] if empleado.get("activo", True)]
+        empleados = self.db.query(EmpleadoDB).filter(EmpleadoDB.activo.is_(True)).all()
+        boletas = self.db.query(BoletaDB).all()
+        asistencias = self.db.query(AsistenciaDB).all()
 
         return {
-            "total_empleados": len(empleados_activos),
-            "total_pagos": sum(float(boleta["sueldo_neto"]) for boleta in data["boletas"]),
-            "total_tardanzas": len([item for item in data["asistencias"] if item["estado"] == "TARDE"]),
-            "total_faltas": len([item for item in data["asistencias"] if item["estado"] == "FALTO"]),
+            "total_empleados": len(empleados),
+            "total_pagos": sum(float(item.sueldo_neto) for item in boletas),
+            "total_tardanzas": len([item for item in asistencias if item.estado == "TARDE"]),
+            "total_faltas": len([item for item in asistencias if item.estado == "FALTO"]),
         }
 
     def pagos_por_periodo(self) -> list[dict]:
-        data = self.store.read()
         periodos: dict[str, dict] = {}
-
-        for boleta in data["boletas"]:
-            periodo = boleta["periodo"]
+        for boleta in self.db.query(BoletaDB).all():
             item = periodos.setdefault(
-                periodo,
-                {"periodo": periodo, "cantidad_boletas": 0, "total_pagado": 0},
+                boleta.periodo,
+                {"periodo": boleta.periodo, "cantidad_boletas": 0, "total_pagado": 0},
             )
             item["cantidad_boletas"] += 1
-            item["total_pagado"] += float(boleta["sueldo_neto"])
-
+            item["total_pagado"] += float(boleta.sueldo_neto)
         return list(periodos.values())
 
     def asistencias_por_empleado(self) -> list[dict]:
-        data = self.store.read()
-        empleados = {empleado["codigo"]: empleado for empleado in data["empleados"]}
-        reportes: dict[str, dict] = {}
-
-        for asistencia in data["asistencias"]:
-            codigo = asistencia["empleado_codigo"]
-            empleado = empleados.get(codigo, {})
-            item = reportes.setdefault(
-                codigo,
+        empleados = self.db.query(EmpleadoDB).order_by(EmpleadoDB.id).all()
+        reportes = []
+        for empleado in empleados:
+            asistencias = empleado.asistencias
+            reportes.append(
                 {
-                    "empleado_codigo": codigo,
-                    "empleado_nombre": f'{empleado.get("nombres", "")} {empleado.get("apellidos", "")}'.strip() or codigo,
-                    "asistio": 0,
-                    "tarde": 0,
-                    "falto": 0,
-                },
+                    "empleado_codigo": empleado.codigo,
+                    "empleado_nombre": f"{empleado.nombres} {empleado.apellidos}",
+                    "asistio": len([item for item in asistencias if item.estado == "ASISTIO"]),
+                    "tarde": len([item for item in asistencias if item.estado == "TARDE"]),
+                    "falto": len([item for item in asistencias if item.estado == "FALTO"]),
+                }
             )
-
-            if asistencia["estado"] == "ASISTIO":
-                item["asistio"] += 1
-            if asistencia["estado"] == "TARDE":
-                item["tarde"] += 1
-            if asistencia["estado"] == "FALTO":
-                item["falto"] += 1
-
-        return list(reportes.values())
+        return reportes
