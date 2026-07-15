@@ -4,7 +4,7 @@ import { Sidebar } from './Sidebar';
 
 export function Layout() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#f2f7ff] text-slate-900">
       <Sidebar />
       <main className="md:pl-64">
         <Header />
