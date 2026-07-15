@@ -9,9 +9,9 @@ import { formatMoney } from '../utils/formatMoney';
 export function Boletas() {
   const [boletas, setBoletas] = useState<Boleta[]>([]);
   const [empleadoCodigo, setEmpleadoCodigo] = useState('EMP001');
-  const [periodo, setPeriodo] = useState('Junio 2026');
-  const [bonos, setBonos] = useState('150');
-  const [descuentos, setDescuentos] = useState('30');
+  const [periodo, setPeriodo] = useState('2026-06');
+  const [bonos, setBonos] = useState('0');
+  const [descuentos, setDescuentos] = useState('0');
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
 
@@ -67,6 +67,7 @@ export function Boletas() {
             Periodo
             <input
               className="w-full rounded-md border border-slate-300 px-3 py-2"
+              type="month"
               value={periodo}
               onChange={(event) => setPeriodo(event.target.value)}
             />

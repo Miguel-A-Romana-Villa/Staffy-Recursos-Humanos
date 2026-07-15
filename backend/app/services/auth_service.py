@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from app.db.models import UsuarioDB
@@ -8,7 +10,7 @@ class AuthService:
     def __init__(self, db: Session):
         self.db = db
 
-    def login(self, payload: LoginRequest) -> UsuarioDB | None:
+    def login(self, payload: LoginRequest) -> Optional[UsuarioDB]:
         usuario = self.db.query(UsuarioDB).filter(UsuarioDB.email == payload.email).first()
         if usuario is None or usuario.password != payload.password or not usuario.activo:
             return None

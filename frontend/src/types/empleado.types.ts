@@ -8,6 +8,9 @@ export type Empleado = {
   apellidos: string;
   cargo: string;
   sueldo_base: number;
+  tipo: TipoEmpleado;
+  horas_trabajadas?: number;
+  tarifa_por_hora?: number;
   hijos: number;
   fecha_nacimiento?: string;
   fecha_inicio?: string;
@@ -18,6 +21,7 @@ export type Empleado = {
 };
 
 export type RegimenPensionario = 'ONP' | 'AFP' | 'SIN_REGIMEN';
+export type TipoEmpleado = 'tiempo_completo' | 'medio_tiempo';
 
 export type EmpleadoForm = Omit<Empleado, 'id' | 'codigo' | 'activo'> & {
   codigo?: string;

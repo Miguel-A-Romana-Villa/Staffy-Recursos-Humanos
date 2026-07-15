@@ -1,0 +1,87 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+abstract class Empleado {
+  codigo
+  dni
+  nombres
+  apellidos
+  cargo
+  sueldo_base
+  calcular_sueldo_base()
+}
+
+class EmpleadoTiempoCompleto {
+  calcular_sueldo_base()
+}
+
+class EmpleadoMedioTiempo {
+  horas_trabajadas
+  tarifa_por_hora
+  calcular_sueldo_base()
+}
+
+class Asistencia {
+  empleado_id
+  fecha
+  estado
+}
+
+class ConceptoPago {
+  empleado_id
+  tipo
+  concepto
+  monto
+  periodo
+}
+
+class Boleta {
+  sueldo_base
+  bonos
+  descuentos
+  calcular_sueldo_neto()
+}
+
+class EmpleadoFactory {
+  crear(data)
+}
+
+class GestorEmpleados <<Singleton>> {
+  get_instance()
+  crear_empleado(data)
+}
+
+interface EstrategiaSueldo {
+  calcular(empleado)
+}
+
+class EstrategiaTiempoCompleto
+class EstrategiaMedioTiempo
+
+class CalculadoraSueldo {
+  calcular(empleado, periodo, conceptos)
+}
+
+class EmpleadoService
+class AsistenciaService
+class ConceptoPagoService
+class SueldoService
+class BoletaService
+class ReporteService
+
+Empleado <|-- EmpleadoTiempoCompleto
+Empleado <|-- EmpleadoMedioTiempo
+EstrategiaSueldo <|.. EstrategiaTiempoCompleto
+EstrategiaSueldo <|.. EstrategiaMedioTiempo
+EmpleadoFactory ..> Empleado
+GestorEmpleados ..> EmpleadoFactory
+CalculadoraSueldo ..> EstrategiaSueldo
+CalculadoraSueldo ..> ConceptoPago
+BoletaService ..> CalculadoraSueldo
+SueldoService ..> CalculadoraSueldo
+EmpleadoService ..> EmpleadoFactory
+AsistenciaService ..> Asistencia
+ConceptoPagoService ..> ConceptoPago
+ReporteService ..> Boleta
+
+@enduml

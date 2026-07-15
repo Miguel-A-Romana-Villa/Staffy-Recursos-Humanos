@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -7,8 +8,8 @@ class AsistenciaBase(BaseModel):
     empleado_id: int
     fecha: date
     estado: str
-    minutos_tardanza: int | None = None
-    comentario: str | None = None
+    minutos_tardanza: Optional[int] = None
+    comentario: Optional[str] = None
 
 
 class AsistenciaCreate(AsistenciaBase):
@@ -16,6 +17,6 @@ class AsistenciaCreate(AsistenciaBase):
 
 
 class AsistenciaResponse(AsistenciaBase):
-    id: int | None = None
+    id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -23,6 +23,9 @@ const initialForm: EmpleadoForm = {
   apellidos: '',
   cargo: '',
   sueldo_base: 0,
+  tipo: 'tiempo_completo',
+  horas_trabajadas: undefined,
+  tarifa_por_hora: undefined,
   hijos: 0,
   fecha_nacimiento: '',
   fecha_inicio: new Date().toISOString().slice(0, 10),
@@ -62,6 +65,8 @@ export function Empleados() {
     const payload = {
       ...form,
       sueldo_base: Number(form.sueldo_base),
+      horas_trabajadas: form.tipo === 'medio_tiempo' ? Number(form.horas_trabajadas || 0) : undefined,
+      tarifa_por_hora: form.tipo === 'medio_tiempo' ? Number(form.tarifa_por_hora || 0) : undefined,
       hijos: Number(form.hijos),
       fecha_cese: form.fecha_cese || undefined,
     };
@@ -137,6 +142,35 @@ function RegistrarEmpleado({
         <Field label="Correo" value={form.correo} onChange={(event) => updateField('correo', event.target.value)} type="email" />
         <Field label="Numero de telefono" value={form.telefono} onChange={(event) => updateField('telefono', event.target.value)} />
         <Field label="Sueldo" value={form.sueldo_base} onChange={(event) => updateField('sueldo_base', Number(event.target.value))} type="number" required />
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium text-slate-700">Tipo de contrato</span>
+          <select
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+            value={form.tipo}
+            onChange={(event) => updateField('tipo', event.target.value as EmpleadoForm['tipo'])}
+          >
+            <option value="tiempo_completo">Tiempo completo</option>
+            <option value="medio_tiempo">Medio tiempo</option>
+          </select>
+        </label>
+        {form.tipo === 'medio_tiempo' && (
+          <>
+            <Field
+              label="Horas trabajadas"
+              value={form.horas_trabajadas ?? ''}
+              onChange={(event) => updateField('horas_trabajadas', Number(event.target.value))}
+              type="number"
+              required
+            />
+            <Field
+              label="Tarifa por hora"
+              value={form.tarifa_por_hora ?? ''}
+              onChange={(event) => updateField('tarifa_por_hora', Number(event.target.value))}
+              type="number"
+              required
+            />
+          </>
+        )}
         <Field label="Hijos" value={form.hijos} onChange={(event) => updateField('hijos', Number(event.target.value))} type="number" />
         <Field label="Fecha de nacimiento" value={form.fecha_nacimiento} onChange={(event) => updateField('fecha_nacimiento', event.target.value)} type="date" />
         <Field label="Cargo" value={form.cargo} onChange={(event) => updateField('cargo', event.target.value)} required />
@@ -219,6 +253,7 @@ function FichaEmpleado({ empleado }: { empleado: Empleado }) {
         <Info label="Correo" value={empleado.correo ?? 'Sin correo'} />
         <Info label="Telefono" value={empleado.telefono ?? 'Sin telefono'} />
         <Info label="Sueldo base" value={formatMoney(empleado.sueldo_base)} />
+        <Info label="Tipo" value={empleado.tipo === 'medio_tiempo' ? 'Medio tiempo' : 'Tiempo completo'} />
         <Info label="Hijos" value={String(empleado.hijos)} />
         <Info label="Fecha de nacimiento" value={empleado.fecha_nacimiento ?? 'Sin fecha'} />
         <Info label="Fecha de inicio" value={empleado.fecha_inicio ?? 'Sin fecha'} />
@@ -242,6 +277,7 @@ function ListaEmpleados({ empleados }: { empleados: Empleado[] }) {
               <th className="px-4 py-3">Nombre completo</th>
               <th className="px-4 py-3">DNI</th>
               <th className="px-4 py-3">Cargo</th>
+              <th className="px-4 py-3">Tipo</th>
               <th className="px-4 py-3">Estado</th>
             </tr>
           </thead>
@@ -254,6 +290,7 @@ function ListaEmpleados({ empleados }: { empleados: Empleado[] }) {
                 </td>
                 <td className="px-4 py-3">{empleado.dni}</td>
                 <td className="px-4 py-3">{empleado.cargo}</td>
+                <td className="px-4 py-3">{empleado.tipo === 'medio_tiempo' ? 'Medio tiempo' : 'Tiempo completo'}</td>
                 <td className="px-4 py-3">{empleado.activo ? 'Activo' : 'Inactivo'}</td>
               </tr>
             ))}
