@@ -1,49 +1,59 @@
 # Arquitectura
 
-El proyecto separa responsabilidades en dos aplicaciones:
+Staffy separa frontend, API, dominio y persistencia.
 
-- `frontend`: interfaz de usuario y consumo de API.
-- `backend`: API REST, validacion de datos, modelos POO y persistencia.
+## Frontend
+
+React solo consume endpoints y muestra la informacion. Las pantallas principales son:
+
+- Dashboard.
+- Empleados.
+- Asistencia.
+- Bonos y descuentos.
+- Sueldos.
+- Boletas.
+- Reportes.
 
 ## Backend
 
-- `models/`: clases principales del dominio.
-- `schemas/`: contratos de entrada y salida con Pydantic.
-- `routes/`: endpoints HTTP.
-- `services/`: casos de uso y coordinacion de la logica.
-- `utils/`: validaciones y constantes compartidas.
-- `data/`: datos locales temporales o archivos de apoyo.
-- `db/`: modelos de tablas SQLAlchemy para la base de datos.
+- `domain/`: reglas de negocio y clases POO.
+- `services/`: coordinan casos de uso.
+- `routes/`: reciben peticiones HTTP y devuelven respuestas.
+- `schemas/`: contratos Pydantic.
+- `db/`: tablas SQLAlchemy.
 
-## Base de datos
+Las rutas no calculan sueldo ni contienen reglas de negocio. Esas reglas estan en `domain/` y se usan desde `services/`.
 
-En desarrollo local se usa SQLite con el archivo `backend/app/data/db.sqlite3`.
+## Persistencia
 
-Para PostgreSQL o Supabase solo se debe cambiar `DATABASE_URL` en `.env`, por ejemplo:
+En desarrollo local se usa SQLite:
+
+```text
+DATABASE_URL=sqlite:///./app/data/db.sqlite3
+```
+
+Para Supabase o PostgreSQL:
 
 ```text
 DATABASE_URL=postgresql+psycopg://usuario:password@host:5432/staffy
 ```
 
-Tablas iniciales:
+Tablas principales:
 
-- `usuarios`: acceso al sistema.
-- `empleados`: informacion principal de trabajadores.
-- `asistencias`: control diario de asistencia.
-- `boletas`: resumen de pagos por periodo.
+- `usuarios`.
+- `empleados`.
+- `asistencias`.
+- `conceptos_pago`.
+- `boletas`.
 
-Usuario inicial de prueba:
+## Flujo
 
 ```text
-correo: admin@staffy.com
-contrasena: 123456
+React -> FastAPI routes -> services -> domain -> SQLAlchemy -> database
 ```
 
-## Modulo de acceso
+El flujo funcional de la aplicacion es:
 
-El proyecto incluye una base inicial para autenticacion:
-
-- Frontend: `pages/Login.tsx`, `services/authApi.ts`, `types/auth.types.ts`.
-- Backend: `routes/auth.py`, `schemas/auth_schema.py`, `services/auth_service.py`, `models/usuario.py`.
-
-Por ahora el login es un contrato inicial. La seguridad real, validacion de usuarios y tokens se implementara en una fase posterior.
+```text
+registrar empleado -> registrar asistencia -> registrar bono/descuento -> calcular sueldo -> generar boleta -> ver reporte
+```
