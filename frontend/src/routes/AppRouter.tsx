@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from '../layouts/Layout';
+import { ProtectedRoute } from '../components/ProtectedRoute';
 import { Asistencia } from '../pages/Asistencia';
 import { BonosDescuentos } from '../pages/BonosDescuentos';
 import { Boletas } from '../pages/Boletas';
@@ -15,15 +16,17 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/empleados" element={<Empleados />} />
-          <Route path="/asistencia" element={<Asistencia />} />
-          <Route path="/bonos-descuentos" element={<BonosDescuentos />} />
-          <Route path="/sueldos" element={<Sueldos />} />
-          <Route path="/boletas" element={<Boletas />} />
-          <Route path="/reportes" element={<Reportes />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/empleados" element={<Empleados />} />
+            <Route path="/asistencia" element={<Asistencia />} />
+            <Route path="/bonos-descuentos" element={<BonosDescuentos />} />
+            <Route path="/sueldos" element={<Sueldos />} />
+            <Route path="/boletas" element={<Boletas />} />
+            <Route path="/reportes" element={<Reportes />} />
+          </Route>
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

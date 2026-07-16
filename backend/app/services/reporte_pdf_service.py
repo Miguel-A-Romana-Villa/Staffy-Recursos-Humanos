@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import BytesIO
+from typing import Sequence
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
@@ -9,6 +10,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy.orm import Session
 
+from app.domain.reporte import AsistenciaEmpleado, PagoPorPeriodo, ResumenReporte
 from app.services.reporte_service import ReporteService
 
 
@@ -18,14 +20,13 @@ class ReportePdfService:
     gris = colors.HexColor("#64748B")
     gris_claro = colors.HexColor("#F1F5F9")
     borde = colors.HexColor("#CBD5E1")
+    fondo = colors.HexColor("#FEFEFE")
 
     def __init__(self, db: Session):
         self.reportes = ReporteService(db)
 
-    def generar(self) -> bytes:
-        resumen = self.reportes.resumen()
-        pagos = self.reportes.pagos_por_periodo()
-        asistencias = self.reportes.asistencias_por_empleado()
+    def generar(self, periodo: str) -> bytes:
+        reporte = self.reportes.generar(periodo)
         buffer = BytesIO()
         documento = SimpleDocTemplate(
             buffer,
@@ -41,19 +42,19 @@ class ReportePdfService:
         contenido = [
             Paragraph("Reporte general", estilos["titulo"]),
             Paragraph(
-                f"Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}",
+                f"Periodo {reporte.periodo} · Generado el {datetime.now().strftime('%d/%m/%Y a las %H:%M')}",
                 estilos["subtitulo"],
             ),
             Spacer(1, 7 * mm),
-            self._tabla_resumen(resumen, estilos),
+            self._tabla_resumen(reporte.resumen, estilos),
             Spacer(1, 9 * mm),
             Paragraph("Pagos por periodo", estilos["seccion"]),
             Spacer(1, 3 * mm),
-            self._tabla_pagos(pagos, estilos),
+            self._tabla_pagos(reporte.pagos, estilos),
             Spacer(1, 9 * mm),
             Paragraph("Asistencias por empleado", estilos["seccion"]),
             Spacer(1, 3 * mm),
-            self._tabla_asistencias(asistencias, estilos),
+            self._tabla_asistencias(reporte.asistencias, estilos),
         ]
         documento.build(contenido, onFirstPage=self._encabezado_pie, onLaterPages=self._encabezado_pie)
         return buffer.getvalue()
@@ -142,12 +143,12 @@ class ReportePdfService:
             "indicador_valor": estilos["IndicadorValorStaffy"],
         }
 
-    def _tabla_resumen(self, resumen: dict, estilos) -> Table:
+    def _tabla_resumen(self, resumen: ResumenReporte, estilos) -> Table:
         indicadores = [
-            ("Empleados activos", str(resumen["total_empleados"])),
-            ("Pagos calculados", self._moneda(resumen["total_pagos"])),
-            ("Tardanzas", str(resumen["total_tardanzas"])),
-            ("Faltas", str(resumen["total_faltas"])),
+            ("Empleados activos", str(resumen.total_empleados)),
+            ("Pagos calculados", self._moneda(resumen.total_pagos)),
+            ("Tardanzas", str(resumen.total_tardanzas)),
+            ("Faltas", str(resumen.total_faltas)),
         ]
         datos = [
             [Paragraph(etiqueta, estilos["indicador_etiqueta"]) for etiqueta, _ in indicadores],
@@ -168,14 +169,14 @@ class ReportePdfService:
         )
         return tabla
 
-    def _tabla_pagos(self, pagos: list[dict], estilos) -> Table:
+    def _tabla_pagos(self, pagos: Sequence[PagoPorPeriodo], estilos) -> Table:
         datos = [["Periodo", "Boletas", "Total pagado"]]
         if pagos:
             datos.extend(
                 [
-                    Paragraph(str(pago["periodo"]), estilos["celda"]),
-                    Paragraph(str(pago["cantidad_boletas"]), estilos["celda_derecha"]),
-                    Paragraph(self._moneda(pago["total_pagado"]), estilos["celda_derecha"]),
+                    Paragraph(pago.periodo, estilos["celda"]),
+                    Paragraph(str(pago.cantidad_boletas), estilos["celda_derecha"]),
+                    Paragraph(self._moneda(pago.total_pagado), estilos["celda_derecha"]),
                 ]
                 for pago in pagos
             )
@@ -188,19 +189,19 @@ class ReportePdfService:
         tabla.setStyle(estilo)
         return tabla
 
-    def _tabla_asistencias(self, asistencias: list[dict], estilos) -> Table:
+    def _tabla_asistencias(self, asistencias: Sequence[AsistenciaEmpleado], estilos) -> Table:
         datos = [["Empleado", "Asistio", "Tarde", "Falto"]]
         if asistencias:
             datos.extend(
                 [
                     Paragraph(
-                        f"<b>{self._texto_seguro(item['empleado_nombre'])}</b><br/>"
-                        f"<font color='#64748B'>{self._texto_seguro(item['empleado_codigo'])}</font>",
+                        f"<b>{self._texto_seguro(item.empleado_nombre)}</b><br/>"
+                        f"<font color='#64748B'>{self._texto_seguro(item.empleado_codigo)}</font>",
                         estilos["celda"],
                     ),
-                    Paragraph(str(item["asistio"]), estilos["celda_derecha"]),
-                    Paragraph(str(item["tarde"]), estilos["celda_derecha"]),
-                    Paragraph(str(item["falto"]), estilos["celda_derecha"]),
+                    Paragraph(str(item.asistio), estilos["celda_derecha"]),
+                    Paragraph(str(item.tarde), estilos["celda_derecha"]),
+                    Paragraph(str(item.falto), estilos["celda_derecha"]),
                 ]
                 for item in asistencias
             )
@@ -222,7 +223,6 @@ class ReportePdfService:
                 ("FONTSIZE", (0, 0), (-1, 0), 8),
                 ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, self.gris_claro]),
                 ("GRID", (0, 0), (-1, -1), 0.35, self.borde),
                 ("TOPPADDING", (0, 0), (-1, -1), 6),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
@@ -234,6 +234,8 @@ class ReportePdfService:
     def _encabezado_pie(self, canvas, documento):
         ancho, alto = A4
         canvas.saveState()
+        canvas.setFillColor(self.fondo)
+        canvas.rect(0, 0, ancho, alto, stroke=0, fill=1)
         canvas.setFillColor(self.azul)
         canvas.setFont("Helvetica-Bold", 11)
         canvas.drawString(18 * mm, alto - 15 * mm, "STAFFY")

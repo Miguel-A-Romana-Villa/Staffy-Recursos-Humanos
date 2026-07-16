@@ -1,6 +1,8 @@
 from datetime import date
 
 import pytest
+from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -11,12 +13,17 @@ from app.domain.empleado import EmpleadoMedioTiempo, EmpleadoTiempoCompleto
 from app.domain.empleado_factory import EmpleadoFactory
 from app.domain.exceptions import BoletaDuplicadaError, DatoInvalidoError
 from app.domain.gestor_empleados import GestorEmpleados
+from app.domain.reporte import ReporteGeneral
 from app.routes.reportes import descargar_reporte_pdf
+from app.security import requerir_usuario
 from app.schemas.asistencia_schema import AsistenciaCreate
+from app.schemas.auth_schema import LoginRequest
 from app.schemas.boleta_schema import BoletaCreate
 from app.schemas.concepto_schema import ConceptoPagoCreate
 from app.schemas.empleado_schema import EmpleadoCreate
+from app.schemas.reporte_schema import ReporteGeneralResponse
 from app.services.asistencia_service import AsistenciaService
+from app.services.auth_service import AuthService
 from app.services.boleta_service import BoletaService
 from app.services.concepto_service import ConceptoPagoService
 from app.services.empleado_service import EmpleadoService
@@ -123,22 +130,22 @@ def test_flujo_completo_rrhh(db):
 
     sueldo = SueldoService(db).calcular("EMP001", "2026-06")
     boleta = BoletaService(db).generar(BoletaCreate(empleado_codigo="EMP001", periodo="2026-06", bonos=0, descuentos=0))
-    resumen = ReporteService(db).resumen()
+    resumen = ReporteService(db).resumen("2026-06")
 
     assert sueldo["sueldo_neto"] == 1920
     assert boleta["sueldo_neto"] == 1920
-    assert resumen["total_empleados"] == 1
-    assert resumen["total_tardanzas"] == 1
-    assert resumen["total_pagos"] == 1920
+    assert resumen.total_empleados == 1
+    assert resumen.total_tardanzas == 1
+    assert resumen.total_pagos == 1920
 
-    reporte_pdf = ReportePdfService(db).generar()
+    reporte_pdf = ReportePdfService(db).generar("2026-06")
     assert reporte_pdf.startswith(b"%PDF-")
     assert len(reporte_pdf) > 1000
 
-    respuesta = descargar_reporte_pdf(db)
+    respuesta = descargar_reporte_pdf("2026-06", db)
     assert respuesta.media_type == "application/pdf"
     assert respuesta.body.startswith(b"%PDF-")
-    assert respuesta.headers["content-disposition"].startswith('attachment; filename="reporte-staffy-')
+    assert respuesta.headers["content-disposition"] == 'attachment; filename="reporte-staffy-2026-06.pdf"'
 
 
 def test_sueldo_medio_tiempo_usa_polimorfismo(db):
@@ -186,3 +193,87 @@ def test_boleta_no_se_duplica_y_conserva_datos_historicos(db):
 def test_validacion_dni():
     with pytest.raises(DatoInvalidoError):
         EmpleadoFactory.crear(empleado_payload(dni="ABC"))
+
+
+def test_reporte_usa_objetos_y_filtra_el_periodo(db):
+    activo = EmpleadoService(db).crear(
+        EmpleadoCreate(**empleado_payload(fecha_inicio=date(2026, 5, 1)))
+    )
+    inactivo = EmpleadoService(db).crear(
+        EmpleadoCreate(
+            **empleado_payload(
+                codigo="EMP002",
+                dni="70214563",
+                nombres="Maria",
+                apellidos="Lopez",
+                fecha_inicio=date(2026, 5, 1),
+                activo=False,
+            )
+        )
+    )
+    EmpleadoService(db).crear(
+        EmpleadoCreate(
+            **empleado_payload(
+                codigo="EMP003",
+                dni="74859612",
+                nombres="Luis",
+                apellidos="Vega",
+                fecha_inicio=date(2026, 7, 1),
+            )
+        )
+    )
+    asistencias = AsistenciaService(db)
+    asistencias.registrar_o_actualizar(
+        AsistenciaCreate(empleado_id=activo.id, fecha=date(2026, 6, 10), estado="TARDE")
+    )
+    asistencias.registrar_o_actualizar(
+        AsistenciaCreate(empleado_id=activo.id, fecha=date(2026, 5, 10), estado="FALTO")
+    )
+    asistencias.registrar_o_actualizar(
+        AsistenciaCreate(empleado_id=inactivo.id, fecha=date(2026, 6, 10), estado="FALTO")
+    )
+    BoletaService(db).generar(
+        BoletaCreate(empleado_codigo="EMP001", periodo="2026-06", bonos=0, descuentos=0)
+    )
+    BoletaService(db).generar(
+        BoletaCreate(empleado_codigo="EMP001", periodo="2026-05", bonos=0, descuentos=0)
+    )
+
+    reporte = ReporteService(db).generar("2026-06")
+
+    assert isinstance(reporte, ReporteGeneral)
+    assert reporte.periodo == "2026-06"
+    assert reporte.resumen.total_empleados == 1
+    assert reporte.resumen.total_tardanzas == 1
+    assert reporte.resumen.total_faltas == 0
+    assert reporte.resumen.total_pagos == 1800
+    assert reporte.pagos[0].cantidad_boletas == 1
+    assert reporte.asistencias[0].empleado_codigo == "EMP001"
+    assert reporte.asistencias[0].total_registros() == 1
+    assert reporte.total_registros_asistencia() == 1
+    respuesta = ReporteGeneralResponse.model_validate(reporte)
+    assert respuesta.periodo == "2026-06"
+    assert respuesta.asistencias[0].empleado_codigo == "EMP001"
+
+
+def test_reporte_valida_el_periodo(db):
+    with pytest.raises(DatoInvalidoError):
+        ReporteService(db).generar("2026-13")
+
+
+def test_login_genera_sesion_firmada_y_protege_reportes(db):
+    servicio = AuthService(db)
+    servicio.asegurar_admin_inicial()
+    usuario = servicio.login(LoginRequest(email="admin@staffy.com", password="123456"))
+
+    assert usuario is not None
+    assert usuario.password.startswith("pbkdf2_sha256$")
+    token = servicio.crear_token(usuario)
+    credenciales = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    assert servicio.usuario_desde_token(token).id == usuario.id
+    assert requerir_usuario(credenciales, db).id == usuario.id
+    assert servicio.usuario_desde_token(f"{token}x") is None
+
+    with pytest.raises(HTTPException) as error:
+        requerir_usuario(None, db)
+    assert error.value.status_code == 401

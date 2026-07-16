@@ -39,6 +39,8 @@ npm install
 npm run dev
 ```
 
+El usuario inicial es `admin@staffy.com` y la contrasena es `123456`. El backend guarda la contrasena cifrada y entrega una sesion firmada al iniciar sesion.
+
 Tests:
 
 ```bash
@@ -61,8 +63,12 @@ python -m pytest
 - Polimorfismo: cada tipo de empleado calcula su sueldo base con su propia implementacion.
 - Encapsulamiento: `Boleta` valida sus datos y calcula sueldo base, bonos, descuentos y sueldo neto.
 - Asociacion y composicion: `Boleta` recibe un `Empleado` y conserva los objetos `ConceptoPago` usados en el calculo.
+- Composicion en reportes: `ReporteGeneral` contiene un `ResumenReporte` y colecciones de `PagoPorPeriodo` y `AsistenciaEmpleado`.
+- Encapsulamiento en reportes: cada objeto valida sus cantidades y `ReporteGeneral` calcula el total de registros de asistencia.
 - Singleton: `GestorEmpleados` mantiene una unica instancia.
 - Factory Method: `EmpleadoFactory` crea empleados segun el tipo recibido.
 - Excepciones personalizadas: errores de datos, duplicados y empleado no encontrado.
 
 El diagrama PlantUML esta en `docs/diagrama_clases.puml`.
+
+Los reportes se consultan por periodo `AAAA-MM`, consideran solo empleados activos durante ese periodo y requieren una sesion valida.

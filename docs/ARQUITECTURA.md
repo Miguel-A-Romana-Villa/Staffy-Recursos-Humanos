@@ -26,6 +26,10 @@ Las rutas no calculan sueldo ni contienen reglas de negocio. Esas reglas estan e
 
 La clase `Boleta` valida el periodo, recibe un empleado y sus conceptos de pago, usa el polimorfismo del empleado para obtener el sueldo base y calcula bonos, descuentos y sueldo neto. `BoletaService` se limita a consultar y guardar la boleta generada.
 
+`ReporteService` consulta los datos de un solo periodo y construye un `ReporteGeneral`. Este objeto compone un `ResumenReporte`, los pagos y las asistencias por empleado. El resumen se calcula a partir de esas mismas colecciones para que el PDF, las tablas y los indicadores siempre coincidan.
+
+Las rutas de reportes exigen una sesion firmada. La contrasena se guarda con PBKDF2 y el frontend agrega el token en cada peticion.
+
 ## Persistencia
 
 En desarrollo local se usa SQLite:
@@ -49,6 +53,8 @@ Tablas principales:
 - `boletas`.
 
 Cada boleta conserva el codigo, nombre, DNI y cargo que tenia el empleado al momento de su generacion. Tambien se evita generar mas de una boleta para el mismo empleado y periodo.
+
+El reporte filtra asistencias por el mes seleccionado y excluye empleados inactivos, empleados que aun no habian ingresado y empleados cesados antes del periodo.
 
 ## Flujo
 

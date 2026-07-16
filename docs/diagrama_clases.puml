@@ -63,12 +63,47 @@ class CalculadoraSueldo {
   calcular(empleado, periodo, conceptos)
 }
 
+class ResumenReporte {
+  total_empleados
+  total_pagos
+  total_tardanzas
+  total_faltas
+}
+
+class PagoPorPeriodo {
+  periodo
+  cantidad_boletas
+  total_pagado
+}
+
+class AsistenciaEmpleado {
+  empleado_codigo
+  empleado_nombre
+  asistio
+  tarde
+  falto
+  total_registros()
+}
+
+class ReporteGeneral {
+  periodo
+  resumen
+  pagos
+  asistencias
+  total_registros_asistencia()
+}
+
 class EmpleadoService
 class AsistenciaService
 class ConceptoPagoService
 class SueldoService
 class BoletaService
-class ReporteService
+class ReporteService {
+  generar(periodo)
+}
+class ReportePdfService {
+  generar(periodo)
+}
 
 Empleado <|-- EmpleadoTiempoCompleto
 Empleado <|-- EmpleadoMedioTiempo
@@ -83,5 +118,10 @@ SueldoService ..> CalculadoraSueldo
 EmpleadoService ..> EmpleadoFactory
 AsistenciaService ..> Asistencia
 ConceptoPagoService ..> ConceptoPago
+ReporteGeneral *-- ResumenReporte
+ReporteGeneral *-- PagoPorPeriodo
+ReporteGeneral *-- AsistenciaEmpleado
+ReporteService ..> ReporteGeneral
+ReportePdfService ..> ReporteService
 
 @enduml
