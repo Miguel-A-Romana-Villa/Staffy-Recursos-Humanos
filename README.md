@@ -58,11 +58,11 @@ python -m pytest
 ## Programacion Orientada a Objetos
 
 - Herencia: `EmpleadoTiempoCompleto` y `EmpleadoMedioTiempo` heredan de `Empleado`.
-- Polimorfismo: cada tipo de empleado calcula su sueldo base con su propia implementacion.
+- Polimorfismo: cada tipo de empleado selecciona su estrategia de sueldo mediante la propiedad `estrategia_sueldo`.
 - Encapsulamiento: `Boleta` valida sus datos y calcula sueldo base, bonos, descuentos y sueldo neto.
 - Asociacion y composicion: `Boleta` recibe un `Empleado` y conserva los objetos `ConceptoPago` usados en el calculo.
-- Singleton: `GestorEmpleados` mantiene una unica instancia.
-- Factory Method: `EmpleadoFactory` crea empleados segun el tipo recibido.
+- Strategy: `SueldoFijo` y `SueldoPorHoras` implementan el calculo correspondiente a cada tipo de empleado.
+- Simple Factory: `EmpleadoFactory` centraliza la creacion de empleados segun el tipo recibido.
 - Excepciones personalizadas: errores de datos, duplicados y empleado no encontrado.
 
 El diagrama PlantUML esta en `docs/diagrama_clases.puml`.

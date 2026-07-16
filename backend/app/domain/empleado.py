@@ -3,6 +3,12 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
+from app.domain.estrategia_sueldo import (
+    EstrategiaSueldo,
+    SueldoFijo,
+    SueldoPorHoras,
+)
+
 
 @dataclass
 class Empleado(ABC):
@@ -32,21 +38,30 @@ class Empleado(ABC):
     def tipo(self) -> str:
         raise NotImplementedError
 
+    @property
     @abstractmethod
-    def calcular_sueldo_base(self) -> float:
+    def estrategia_sueldo(self) -> EstrategiaSueldo:
         raise NotImplementedError
+
+    def calcular_sueldo_base(self) -> float:
+        return self.estrategia_sueldo.calcular(self)
 
 
 class EmpleadoTiempoCompleto(Empleado):
+    _estrategia_sueldo = SueldoFijo()
+
     @property
     def tipo(self) -> str:
         return "tiempo_completo"
 
-    def calcular_sueldo_base(self) -> float:
-        return float(self.sueldo_base)
+    @property
+    def estrategia_sueldo(self) -> EstrategiaSueldo:
+        return self._estrategia_sueldo
 
 
 class EmpleadoMedioTiempo(Empleado):
+    _estrategia_sueldo = SueldoPorHoras()
+
     def __init__(self, horas_trabajadas: float, tarifa_por_hora: float, **kwargs):
         super().__init__(**kwargs)
         self.horas_trabajadas = float(horas_trabajadas or 0)
@@ -56,5 +71,6 @@ class EmpleadoMedioTiempo(Empleado):
     def tipo(self) -> str:
         return "medio_tiempo"
 
-    def calcular_sueldo_base(self) -> float:
-        return self.horas_trabajadas * self.tarifa_por_hora
+    @property
+    def estrategia_sueldo(self) -> EstrategiaSueldo:
+        return self._estrategia_sueldo
