@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
+import axios from 'axios';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Table } from '../components/Table';
@@ -39,8 +40,11 @@ export function Boletas() {
 
       setBoletas((current) => [response.data, ...current]);
       setMensaje('Boleta generada correctamente.');
-    } catch {
-      setError('No se pudo generar la boleta. Verifica el codigo del empleado.');
+    } catch (requestError) {
+      const detail = axios.isAxiosError<{ detail?: string }>(requestError)
+        ? requestError.response?.data?.detail
+        : undefined;
+      setError(detail ?? 'No se pudo generar la boleta. Verifica los datos ingresados.');
     }
   }
 

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.db.models import ConceptoPagoDB, EmpleadoDB
+from app.domain.boleta import Boleta
 from app.domain.calculadora_sueldo import CalculadoraSueldo
 from app.domain.concepto_pago import ConceptoPago
 from app.domain.empleado_factory import EmpleadoFactory
@@ -24,21 +25,36 @@ class SueldoService:
         bonos_extra: float = 0,
         descuentos_extra: float = 0,
     ) -> dict:
+        boleta = self.calcular_boleta(
+            empleado_codigo=empleado_codigo,
+            periodo=periodo,
+            bonos_extra=bonos_extra,
+            descuentos_extra=descuentos_extra,
+        )
+        resultado = boleta.to_dict()
+        resultado["conceptos"] = [
+            {"tipo": item.tipo, "concepto": item.concepto, "monto": item.monto, "periodo": item.periodo}
+            for item in boleta.conceptos
+        ]
+        return resultado
+
+    def calcular_boleta(
+        self,
+        empleado_codigo: str,
+        periodo: str,
+        bonos_extra: float = 0,
+        descuentos_extra: float = 0,
+    ) -> Boleta:
         empleado_db = self.obtener_empleado(empleado_codigo)
         empleado = EmpleadoFactory.crear(self._empleado_to_dict(empleado_db))
         conceptos = self._conceptos(empleado_db.id, periodo)
-        resultado = CalculadoraSueldo().calcular(
+        return CalculadoraSueldo().calcular(
             empleado=empleado,
             periodo=periodo,
             conceptos=conceptos,
             bonos_extra=bonos_extra,
             descuentos_extra=descuentos_extra,
         )
-        resultado["conceptos"] = [
-            {"tipo": item.tipo, "concepto": item.concepto, "monto": item.monto, "periodo": item.periodo}
-            for item in conceptos
-        ]
-        return resultado
 
     def _conceptos(self, empleado_id: int, periodo: str) -> list[ConceptoPago]:
         conceptos = (

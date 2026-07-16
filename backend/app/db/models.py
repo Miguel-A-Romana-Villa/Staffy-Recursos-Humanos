@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -63,9 +63,14 @@ class AsistenciaDB(Base):
 
 class BoletaDB(Base):
     __tablename__ = "boletas"
+    __table_args__ = (UniqueConstraint("empleado_id", "periodo", name="uq_boletas_empleado_periodo"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     empleado_id: Mapped[int] = mapped_column(ForeignKey("empleados.id"), nullable=False)
+    empleado_codigo: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    empleado_nombre: Mapped[Optional[str]] = mapped_column(String(240), nullable=True)
+    dni: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)
+    cargo: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     periodo: Mapped[str] = mapped_column(String(20), nullable=False)
     sueldo_base: Mapped[float] = mapped_column(Float, nullable=False)
     bonos: Mapped[float] = mapped_column(Float, default=0, nullable=False)
