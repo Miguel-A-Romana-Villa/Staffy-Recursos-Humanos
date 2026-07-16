@@ -15,7 +15,7 @@ from app.routes.reportes import descargar_reporte_pdf
 from app.schemas.asistencia_schema import AsistenciaCreate
 from app.schemas.boleta_schema import BoletaCreate
 from app.schemas.concepto_schema import ConceptoPagoCreate
-from app.schemas.empleado_schema import EmpleadoCreate
+from app.schemas.empleado_schema import EmpleadoCreate, EmpleadoUpdate
 from app.services.asistencia_service import AsistenciaService
 from app.services.boleta_service import BoletaService
 from app.services.concepto_service import ConceptoPagoService
@@ -186,3 +186,19 @@ def test_boleta_no_se_duplica_y_conserva_datos_historicos(db):
 def test_validacion_dni():
     with pytest.raises(DatoInvalidoError):
         EmpleadoFactory.crear(empleado_payload(dni="ABC"))
+
+
+def test_actualizar_y_buscar_empleado(db):
+    service = EmpleadoService(db)
+    empleado = service.crear(EmpleadoCreate(**empleado_payload(correo="juan@staffy.com")))
+
+    actualizado = service.actualizar(
+        empleado.id,
+        EmpleadoUpdate(nombres="Ana", cargo="Analista", correo=None),
+    )
+
+    assert actualizado is not None
+    assert actualizado.nombres == "Ana"
+    assert actualizado.cargo == "Analista"
+    assert actualizado.correo is None
+    assert service.listar("Ana")[0].id == empleado.id
