@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str = "sqlite:///./app/data/db.sqlite3"
     frontend_url: str = "http://localhost:5173"
+    auth_secret: str = "staffy-local-secret"
+    auth_token_hours: int = 8
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

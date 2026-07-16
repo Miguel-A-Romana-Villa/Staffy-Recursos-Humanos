@@ -2,48 +2,53 @@ import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { Input } from '../components/Input';
 import { Table } from '../components/Table';
 import { reportesApi } from '../services/reportesApi';
-import type {
-  ReporteAsistenciaEmpleado,
-  ReportePagoPeriodo,
-  ReporteResumen,
-} from '../types/reporte.types';
+import type { ReporteGeneral } from '../types/reporte.types';
+import { currentPeriod } from '../utils/currentPeriod';
 import { formatMoney } from '../utils/formatMoney';
 
 export function Reportes() {
-  const [resumen, setResumen] = useState<ReporteResumen | null>(null);
-  const [pagos, setPagos] = useState<ReportePagoPeriodo[]>([]);
-  const [asistencias, setAsistencias] = useState<ReporteAsistenciaEmpleado[]>(
-    [],
-  );
+  const [periodo, setPeriodo] = useState(currentPeriod);
+  const [reporte, setReporte] = useState<ReporteGeneral | null>(null);
+  const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [descargando, setDescargando] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      reportesApi.resumen(),
-      reportesApi.pagos(),
-      reportesApi.asistencias(),
-    ])
-      .then(([resumenResponse, pagosResponse, asistenciasResponse]) => {
-        setResumen(resumenResponse.data);
-        setPagos(pagosResponse.data);
-        setAsistencias(asistenciasResponse.data);
+    let activo = true;
+    setCargando(true);
+    setError('');
+    setReporte(null);
+
+    reportesApi
+      .general(periodo)
+      .then((response) => {
+        if (activo) setReporte(response.data);
       })
-      .catch(() => setError('No se pudieron cargar los reportes.'));
-  }, []);
+      .catch(() => {
+        if (activo) setError('No se pudieron cargar los reportes.');
+      })
+      .finally(() => {
+        if (activo) setCargando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [periodo]);
 
   async function descargarReporte() {
     setDescargando(true);
     setError('');
 
     try {
-      const response = await reportesApi.descargarPdf();
+      const response = await reportesApi.descargarPdf(periodo);
       const url = URL.createObjectURL(response.data);
       const enlace = document.createElement('a');
       enlace.href = url;
-      enlace.download = `reporte-staffy-${new Date().toISOString().slice(0, 10)}.pdf`;
+      enlace.download = `reporte-staffy-${periodo}.pdf`;
       document.body.appendChild(enlace);
       enlace.click();
       enlace.remove();
@@ -55,28 +60,54 @@ export function Reportes() {
     }
   }
 
+  const pagos = reporte?.pagos ?? [];
+  const asistencias = reporte?.asistencias ?? [];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold">Reportes</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Resumen de empleados, asistencias y pagos calculados por periodo.
+            Resumen de empleados, asistencias y pagos del periodo seleccionado.
           </p>
         </div>
-        <Button
-          className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-blue-300"
-          disabled={descargando}
-          type="button"
-          onClick={descargarReporte}
-        >
-          <Download size={17} />
-          {descargando ? 'Generando...' : 'Descargar PDF'}
-        </Button>
+        <div className="flex flex-wrap items-end gap-3">
+          <label>
+            <span className="mb-1 block text-sm font-medium text-slate-700">
+              Periodo
+            </span>
+            <Input
+              aria-label="Periodo del reporte"
+              type="month"
+              value={periodo}
+              onChange={(event) => {
+                if (event.target.value) setPeriodo(event.target.value);
+              }}
+            />
+          </label>
+          <Button
+            className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:bg-blue-300"
+            disabled={descargando || cargando || !reporte}
+            type="button"
+            onClick={descargarReporte}
+          >
+            <Download size={17} />
+            {descargando ? 'Generando...' : 'Descargar PDF'}
+          </Button>
+        </div>
       </div>
 
+      {cargando && (
+        <p className="text-sm text-slate-500" role="status">
+          Cargando reporte...
+        </p>
+      )}
       {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p
+          className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+          role="alert"
+        >
           {error}
         </p>
       )}
@@ -85,31 +116,31 @@ export function Reportes() {
         <Card>
           <p className="text-sm text-slate-500">Empleados activos</p>
           <p className="mt-2 text-2xl font-bold">
-            {resumen?.total_empleados ?? 0}
+            {reporte?.resumen.total_empleados ?? '—'}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-slate-500">Pagos calculados</p>
           <p className="mt-2 text-2xl font-bold">
-            {formatMoney(resumen?.total_pagos ?? 0)}
+            {reporte ? formatMoney(reporte.resumen.total_pagos) : '—'}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-slate-500">Tardanzas</p>
           <p className="mt-2 text-2xl font-bold">
-            {resumen?.total_tardanzas ?? 0}
+            {reporte?.resumen.total_tardanzas ?? '—'}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-slate-500">Faltas</p>
           <p className="mt-2 text-2xl font-bold">
-            {resumen?.total_faltas ?? 0}
+            {reporte?.resumen.total_faltas ?? '—'}
           </p>
         </Card>
       </div>
 
       <Card>
-        <h3 className="mb-4 text-lg font-semibold">Pagos por periodo</h3>
+        <h3 className="mb-4 text-lg font-semibold">Pagos del periodo</h3>
         <div className="overflow-x-auto">
           <Table>
             <thead className="bg-slate-100 text-left text-xs uppercase text-slate-500">
@@ -129,6 +160,13 @@ export function Reportes() {
                   </td>
                 </tr>
               ))}
+              {!cargando && pagos.length === 0 && (
+                <tr>
+                  <td className="px-3 py-4 text-sm text-slate-500" colSpan={3}>
+                    No hay pagos registrados en este periodo.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </Table>
         </div>
@@ -163,6 +201,13 @@ export function Reportes() {
                   <td className="px-3 py-3">{asistencia.falto}</td>
                 </tr>
               ))}
+              {!cargando && asistencias.length === 0 && (
+                <tr>
+                  <td className="px-3 py-4 text-sm text-slate-500" colSpan={4}>
+                    No hay empleados activos en este periodo.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </Table>
         </div>

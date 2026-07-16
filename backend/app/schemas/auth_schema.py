@@ -22,4 +22,5 @@ class UsuarioSesion(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
+    token_type: str = "bearer"
     usuario: UsuarioSesion

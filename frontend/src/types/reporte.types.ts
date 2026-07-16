@@ -18,3 +18,10 @@ export type ReporteAsistenciaEmpleado = {
   tarde: number;
   falto: number;
 };
+
+export type ReporteGeneral = {
+  periodo: string;
+  resumen: ReporteResumen;
+  pagos: ReportePagoPeriodo[];
+  asistencias: ReporteAsistenciaEmpleado[];
+};
