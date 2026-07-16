@@ -9,8 +9,8 @@ from app.domain.boleta import Boleta
 from app.domain.concepto_pago import ConceptoPago
 from app.domain.empleado import EmpleadoMedioTiempo, EmpleadoTiempoCompleto
 from app.domain.empleado_factory import EmpleadoFactory
+from app.domain.estrategia_sueldo import SueldoFijo, SueldoPorHoras
 from app.domain.exceptions import BoletaDuplicadaError, DatoInvalidoError
-from app.domain.gestor_empleados import GestorEmpleados
 from app.routes.reportes import descargar_reporte_pdf
 from app.schemas.asistencia_schema import AsistenciaCreate
 from app.schemas.boleta_schema import BoletaCreate
@@ -53,7 +53,7 @@ def empleado_payload(**extra):
     return data
 
 
-def test_factory_herencia_y_singleton():
+def test_factory_herencia_polimorfismo_y_strategy():
     completo = EmpleadoFactory.crear(empleado_payload())
     medio_tiempo = EmpleadoFactory.crear(
         empleado_payload(
@@ -68,9 +68,10 @@ def test_factory_herencia_y_singleton():
 
     assert isinstance(completo, EmpleadoTiempoCompleto)
     assert isinstance(medio_tiempo, EmpleadoMedioTiempo)
+    assert isinstance(completo.estrategia_sueldo, SueldoFijo)
+    assert isinstance(medio_tiempo.estrategia_sueldo, SueldoPorHoras)
     assert completo.calcular_sueldo_base() == 1800
     assert medio_tiempo.calcular_sueldo_base() == 1200
-    assert GestorEmpleados.get_instance() is GestorEmpleados.get_instance()
 
 
 def test_boleta_encapsula_calculo_y_conceptos():

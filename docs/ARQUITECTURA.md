@@ -24,6 +24,8 @@ React solo consume endpoints y muestra la informacion. Las pantallas principales
 
 Las rutas no calculan sueldo ni contienen reglas de negocio. Esas reglas estan en `domain/` y se usan desde `services/`.
 
+La creacion de empleados utiliza Simple Factory mediante `EmpleadoFactory`. El calculo del sueldo base utiliza Strategy: `EmpleadoTiempoCompleto` trabaja con `SueldoFijo` y `EmpleadoMedioTiempo` con `SueldoPorHoras`. Las dos estrategias implementan el mismo contrato y se usan en el flujo real de sueldos y boletas.
+
 La clase `Boleta` valida el periodo, recibe un empleado y sus conceptos de pago, usa el polimorfismo del empleado para obtener el sueldo base y calcula bonos, descuentos y sueldo neto. `BoletaService` se limita a consultar y guardar la boleta generada.
 
 ## Persistencia

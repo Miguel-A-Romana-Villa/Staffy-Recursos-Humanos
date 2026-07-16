@@ -8,17 +8,32 @@ abstract class Empleado {
   apellidos
   cargo
   sueldo_base
+  estrategia_sueldo
   calcular_sueldo_base()
 }
 
 class EmpleadoTiempoCompleto {
-  calcular_sueldo_base()
+  tipo
+  estrategia_sueldo
 }
 
 class EmpleadoMedioTiempo {
+  tipo
   horas_trabajadas
   tarifa_por_hora
-  calcular_sueldo_base()
+  estrategia_sueldo
+}
+
+interface EstrategiaSueldo <<Strategy>> {
+  calcular(empleado)
+}
+
+class SueldoFijo {
+  calcular(empleado)
+}
+
+class SueldoPorHoras {
+  calcular(empleado)
 }
 
 class Asistencia {
@@ -54,11 +69,6 @@ class EmpleadoFactory {
   crear(data)
 }
 
-class GestorEmpleados <<Singleton>> {
-  get_instance()
-  crear_empleado(data)
-}
-
 class CalculadoraSueldo {
   calcular(empleado, periodo, conceptos)
 }
@@ -72,8 +82,11 @@ class ReporteService
 
 Empleado <|-- EmpleadoTiempoCompleto
 Empleado <|-- EmpleadoMedioTiempo
+EstrategiaSueldo <|.. SueldoFijo
+EstrategiaSueldo <|.. SueldoPorHoras
+EmpleadoTiempoCompleto o-- SueldoFijo
+EmpleadoMedioTiempo o-- SueldoPorHoras
 EmpleadoFactory ..> Empleado
-GestorEmpleados ..> EmpleadoFactory
 Boleta ..> Empleado
 Boleta o-- ConceptoPago
 CalculadoraSueldo ..> Boleta
