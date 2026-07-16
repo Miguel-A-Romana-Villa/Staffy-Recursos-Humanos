@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends
+from datetime import date
+
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.reporte_schema import ReporteAsistenciaEmpleado, ReportePagoPeriodo, ReporteResumen
+from app.services.reporte_pdf_service import ReportePdfService
 from app.services.reporte_service import ReporteService
 
 router = APIRouter()
@@ -21,3 +24,14 @@ def listar_pagos_por_periodo(db: Session = Depends(get_db)):
 @router.get("/asistencias", response_model=list[ReporteAsistenciaEmpleado])
 def listar_asistencias_por_empleado(db: Session = Depends(get_db)):
     return ReporteService(db).asistencias_por_empleado()
+
+
+@router.get("/pdf")
+def descargar_reporte_pdf(db: Session = Depends(get_db)):
+    contenido = ReportePdfService(db).generar()
+    nombre = f"reporte-staffy-{date.today().isoformat()}.pdf"
+    return Response(
+        content=contenido,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{nombre}"'},
+    )

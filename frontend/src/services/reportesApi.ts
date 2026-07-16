@@ -8,5 +8,7 @@ import type {
 export const reportesApi = {
   resumen: () => api.get<ReporteResumen>('/reportes/resumen'),
   pagos: () => api.get<ReportePagoPeriodo[]>('/reportes/pagos'),
-  asistencias: () => api.get<ReporteAsistenciaEmpleado[]>('/reportes/asistencias'),
+  asistencias: () =>
+    api.get<ReporteAsistenciaEmpleado[]>('/reportes/asistencias'),
+  descargarPdf: () => api.get<Blob>('/reportes/pdf', { responseType: 'blob' }),
 };

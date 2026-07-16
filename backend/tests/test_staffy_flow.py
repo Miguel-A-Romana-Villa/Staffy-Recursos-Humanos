@@ -9,6 +9,7 @@ from app.domain.empleado import EmpleadoMedioTiempo, EmpleadoTiempoCompleto
 from app.domain.empleado_factory import EmpleadoFactory
 from app.domain.exceptions import DatoInvalidoError
 from app.domain.gestor_empleados import GestorEmpleados
+from app.routes.reportes import descargar_reporte_pdf
 from app.schemas.asistencia_schema import AsistenciaCreate
 from app.schemas.boleta_schema import BoletaCreate
 from app.schemas.concepto_schema import ConceptoPagoCreate
@@ -17,6 +18,7 @@ from app.services.asistencia_service import AsistenciaService
 from app.services.boleta_service import BoletaService
 from app.services.concepto_service import ConceptoPagoService
 from app.services.empleado_service import EmpleadoService
+from app.services.reporte_pdf_service import ReportePdfService
 from app.services.reporte_service import ReporteService
 from app.services.sueldo_service import SueldoService
 
@@ -90,6 +92,15 @@ def test_flujo_completo_rrhh(db):
     assert resumen["total_empleados"] == 1
     assert resumen["total_tardanzas"] == 1
     assert resumen["total_pagos"] == 1920
+
+    reporte_pdf = ReportePdfService(db).generar()
+    assert reporte_pdf.startswith(b"%PDF-")
+    assert len(reporte_pdf) > 1000
+
+    respuesta = descargar_reporte_pdf(db)
+    assert respuesta.media_type == "application/pdf"
+    assert respuesta.body.startswith(b"%PDF-")
+    assert respuesta.headers["content-disposition"].startswith('attachment; filename="reporte-staffy-')
 
 
 def test_sueldo_medio_tiempo_usa_polimorfismo(db):
