@@ -33,12 +33,20 @@ class ConceptoPago {
   concepto
   monto
   periodo
+  es_bono()
+  es_descuento()
+  pertenece_al_periodo(periodo)
 }
 
 class Boleta {
+  empleado_codigo
+  empleado_nombre
+  periodo
   sueldo_base
   bonos
   descuentos
+  conceptos
+  generar(empleado, periodo, conceptos)
   calcular_sueldo_neto()
 }
 
@@ -50,13 +58,6 @@ class GestorEmpleados <<Singleton>> {
   get_instance()
   crear_empleado(data)
 }
-
-interface EstrategiaSueldo {
-  calcular(empleado)
-}
-
-class EstrategiaTiempoCompleto
-class EstrategiaMedioTiempo
 
 class CalculadoraSueldo {
   calcular(empleado, periodo, conceptos)
@@ -71,17 +72,16 @@ class ReporteService
 
 Empleado <|-- EmpleadoTiempoCompleto
 Empleado <|-- EmpleadoMedioTiempo
-EstrategiaSueldo <|.. EstrategiaTiempoCompleto
-EstrategiaSueldo <|.. EstrategiaMedioTiempo
 EmpleadoFactory ..> Empleado
 GestorEmpleados ..> EmpleadoFactory
-CalculadoraSueldo ..> EstrategiaSueldo
-CalculadoraSueldo ..> ConceptoPago
-BoletaService ..> CalculadoraSueldo
+Boleta ..> Empleado
+Boleta o-- ConceptoPago
+CalculadoraSueldo ..> Boleta
+BoletaService ..> Boleta
+BoletaService ..> SueldoService
 SueldoService ..> CalculadoraSueldo
 EmpleadoService ..> EmpleadoFactory
 AsistenciaService ..> Asistencia
 ConceptoPagoService ..> ConceptoPago
-ReporteService ..> Boleta
 
 @enduml

@@ -50,6 +50,13 @@ def ensure_schema_updates():
         add_column_if_missing("asistencias", asistencia_columns, "minutos_tardanza", "INTEGER")
         add_column_if_missing("asistencias", asistencia_columns, "comentario", "TEXT")
 
+    if "boletas" in tables:
+        boleta_columns = {column["name"] for column in inspector.get_columns("boletas")}
+        add_column_if_missing("boletas", boleta_columns, "empleado_codigo", "VARCHAR(20)")
+        add_column_if_missing("boletas", boleta_columns, "empleado_nombre", "VARCHAR(240)")
+        add_column_if_missing("boletas", boleta_columns, "dni", "VARCHAR(12)")
+        add_column_if_missing("boletas", boleta_columns, "cargo", "VARCHAR(80)")
+
 
 def add_column_if_missing(table_name: str, existing_columns: set[str], column_name: str, definition: str):
     if column_name in existing_columns:

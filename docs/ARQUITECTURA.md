@@ -24,6 +24,8 @@ React solo consume endpoints y muestra la informacion. Las pantallas principales
 
 Las rutas no calculan sueldo ni contienen reglas de negocio. Esas reglas estan en `domain/` y se usan desde `services/`.
 
+La clase `Boleta` valida el periodo, recibe un empleado y sus conceptos de pago, usa el polimorfismo del empleado para obtener el sueldo base y calcula bonos, descuentos y sueldo neto. `BoletaService` se limita a consultar y guardar la boleta generada.
+
 ## Persistencia
 
 En desarrollo local se usa SQLite:
@@ -45,6 +47,8 @@ Tablas principales:
 - `asistencias`.
 - `conceptos_pago`.
 - `boletas`.
+
+Cada boleta conserva el codigo, nombre, DNI y cargo que tenia el empleado al momento de su generacion. Tambien se evita generar mas de una boleta para el mismo empleado y periodo.
 
 ## Flujo
 
