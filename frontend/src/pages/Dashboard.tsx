@@ -6,13 +6,21 @@ import type { ReporteResumen } from '../types/reporte.types';
 import { formatMoney } from '../utils/formatMoney';
 import { currentPeriod } from '../utils/currentPeriod';
 
+// Importamos las imágenes desde la carpeta assets (donde deben estar ahora)
+import imgEmpleados from '../assets/empleado-del-mes.png';
+import imgAsistencia from '../assets/ausencia.png';
+import imgBonos from '../assets/bonos-del-gobierno.png';
+import imgSueldos from '../assets/nomina-de-sueldos.png';
+import imgBoletas from '../assets/factura.png';
+import imgReportes from '../assets/informe.png';
+
 const accesos = [
-  { to: '/empleados', label: 'Empleados' },
-  { to: '/asistencia', label: 'Asistencia' },
-  { to: '/bonos-descuentos', label: 'Bonos y descuentos' },
-  { to: '/sueldos', label: 'Sueldos' },
-  { to: '/boletas', label: 'Boletas' },
-  { to: '/reportes', label: 'Reportes' },
+  { to: '/empleados', label: 'Empleados', img: imgEmpleados },
+  { to: '/asistencia', label: 'Asistencia', img: imgAsistencia },
+  { to: '/bonos-descuentos', label: 'Bonos y descuentos', img: imgBonos },
+  { to: '/sueldos', label: 'Sueldos', img: imgSueldos },
+  { to: '/boletas', label: 'Boletas', img: imgBoletas },
+  { to: '/reportes', label: 'Reportes', img: imgReportes },
 ];
 
 export function Dashboard() {
@@ -85,11 +93,16 @@ export function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         {accesos.map((item) => (
           <Link
-            className="rounded-md border border-slate-200 bg-white p-4 font-semibold text-slate-800 shadow-sm hover:border-blue-300 hover:text-blue-700"
+            className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-4 font-semibold text-slate-800 shadow-sm transition-colors hover:border-blue-300 hover:text-blue-700"
             key={item.to}
             to={item.to}
           >
-            {item.label}
+            <img
+              src={item.img}
+              alt={item.label}
+              className="h-10 w-10 object-contain"
+            />
+            <span>{item.label}</span>
           </Link>
         ))}
       </div>
